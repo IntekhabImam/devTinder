@@ -1,0 +1,2 @@
+-creating server
+-setup crud system
