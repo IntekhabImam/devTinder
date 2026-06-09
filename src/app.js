@@ -45,6 +45,15 @@ app.get("/users", async(req, res) =>{
 app.get("/user", async(req, res) =>{
     const email = req.body.email;
     try{
+
+        // allowed field to enter
+        const allowedFields = ["email", "firstName", "lastName", "password", "gender", "skills", "about", "photoUrl"];
+
+            const isValidField = allowedFields.includes(email);
+            if (!isValidField) {
+                return res.status(400).send({ error: "Invalid field!" });
+            }       
+
         const user = await User.findOne({email: email});
         res.send(user);
     }catch(err){
@@ -58,6 +67,15 @@ app.patch("/user/:id", async(req, res) =>{
     const id = req.params.id;
     const updates = req.body;
     try{
+        //allowed updates for user
+        const allowedUpdates = [ "password", "gender", "photoUrl", "skills", "about"];
+
+        const isValidOperation = Object.keys(updates).every((update) => allowedUpdates.includes(update));
+
+        if (!isValidOperation) {
+            return res.status(400).send({ error: "Invalid updates!" });
+        }
+
         const user = await User.findByIdAndUpdate(id, updates, {new: true,runValidators: true});
         
         res.send("user updated successfully",user);
