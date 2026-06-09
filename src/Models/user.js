@@ -52,6 +52,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "Hey there! I am using DevTinder.",
     },
+    age: {
+      type: Number,
+      min: 18,
+      max: 100,
+    },
   },
   {
     timestamps: true,

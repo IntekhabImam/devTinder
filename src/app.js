@@ -22,6 +22,27 @@ app.post("/signup",async(req, res) =>{
     const user = new User(req.body);
 
     try{
+         // allowed field to enter //
+      const allowedFields = [
+  "email",
+  "firstName",
+  "lastName",
+  "password",
+  "gender",
+  "skills",
+  "about",
+  "photoUrl",
+  "age"
+];
+
+const isValidField = Object.keys(req.body).every(
+  (field) => allowedFields.includes(field)
+);
+
+if (!isValidField) {
+  return res.status(400).send({ error: "Invalid field!" });
+}     
+
         const savedUser = await user.save();
         res.send("user saved successfully");
     }catch(err){
@@ -45,14 +66,6 @@ app.get("/users", async(req, res) =>{
 app.get("/user", async(req, res) =>{
     const email = req.body.email;
     try{
-
-        // allowed field to enter
-        const allowedFields = ["email", "firstName", "lastName", "password", "gender", "skills", "about", "photoUrl"];
-
-            const isValidField = allowedFields.includes(email);
-            if (!isValidField) {
-                return res.status(400).send({ error: "Invalid field!" });
-            }       
 
         const user = await User.findOne({email: email});
         res.send(user);
