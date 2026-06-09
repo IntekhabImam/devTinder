@@ -25,7 +25,9 @@ app.post("/signup",async(req, res) =>{
         const savedUser = await user.save();
         res.send("user saved successfully");
     }catch(err){
+        
         res.send("Error saving user", err);
+        console.log("Error saving user", err);
     }
 })
 
@@ -56,7 +58,8 @@ app.patch("/user/:id", async(req, res) =>{
     const id = req.params.id;
     const updates = req.body;
     try{
-        const user = await User.findByIdAndUpdate(id, updates, {new: true});
+        const user = await User.findByIdAndUpdate(id, updates, {new: true,runValidators: true});
+        
         res.send("user updated successfully",user);
     }catch(err){
         res.send("Error updating user", err);
