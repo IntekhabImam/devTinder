@@ -2,6 +2,9 @@ const express = require("express");
 const connectDB = require("./config/database")
 const User = require("./Models/user");
 const app  = express();
+const validatSignupData = require("./utils/validation");
+const validateLoginData = require("./utils/loginValidation");
+
 
 app.use(express.json());
 
@@ -22,35 +25,46 @@ app.post("/signup",async(req, res) =>{
     const user = new User(req.body);
 
     try{
-         // allowed field to enter //
-      const allowedFields = [
-  "email",
-  "firstName",
-  "lastName",
-  "password",
-  "gender",
-  "skills",
-  "about",
-  "photoUrl",
-  "age"
-];
-
-const isValidField = Object.keys(req.body).every(
-  (field) => allowedFields.includes(field)
-);
-
-if (!isValidField) {
-  return res.status(400).send({ error: "Invalid field!" });
-}     
-
-        const savedUser = await user.save();
-        res.send("user saved successfully");
+        validatSignupData(req);
+        await user.save();
+        res.status(201).send("User created successfully");
     }catch(err){
-        
-        res.send("Error saving user", err);
-        console.log("Error saving user", err);
+        res.status(400).send("Error creating user", err);
+        console.log("Error creating user", err);
+
     }
-})
+
+
+        
+});     
+
+// login route
+app.post("/login", async (req, res, next) => {
+  try {
+    validateLoginData(req);
+
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    if (user.password !== password) {
+      throw new Error("Invalid credentials");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user,
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
 
 //get all users data
 app.get("/users", async(req, res) =>{
