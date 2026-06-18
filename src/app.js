@@ -5,9 +5,13 @@ const app  = express();
 const validatSignupData = require("./utils/validation");
 const validateLoginData = require("./utils/loginValidation");
 const bcrypt = require("bcrypt");
+const cookieParser = require('cookie-parser');
+const jwt = require("jsonwebtoken");
+const authLogin = require("./middleware/authLogin");
 
 
 app.use(express.json());
+app.use(cookieParser());
 
 // database and server connection starting
 connectDB()
@@ -64,11 +68,17 @@ app.post("/login", async (req, res, next) => {
     }
     
     // cheaking password is correct or not
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    const isPasswordMatch = await user.verifyPassword(password);
 
     if (!isPasswordMatch) {
       throw new Error("Invalid credentials");
     }
+    // generate JWT token
+    const token = user.generateJWT ();
+
+    res.cookie("token", token, {
+      httpOnly: true,
+    });
 
     res.status(200).json({
       success: true,
@@ -81,58 +91,8 @@ app.post("/login", async (req, res, next) => {
   }
 });
 
-//get all users data
-app.get("/users", async(req, res) =>{
-    try{
-        const users = await User.find();
-        res.send(users);
-    }catch(err){
-        res.send("Error fetching users", err);
-    }})
+//profile route
 
-// get user by email
-
-app.get("/user", async(req, res) =>{
-    const email = req.body.email;
-    try{
-
-        const user = await User.findOne({email: email});
-        res.send(user);
-    }catch(err){
-        res.send("Error fetching user", err);
-    }});
-
-
-//update user by id
-
-app.patch("/user/:id", async(req, res) =>{
-    const id = req.params.id;
-    const updates = req.body;
-    try{
-        //allowed updates for user
-        const allowedUpdates = [ "password", "gender", "photoUrl", "skills", "about"];
-
-        const isValidOperation = Object.keys(updates).every((update) => allowedUpdates.includes(update));
-
-        if (!isValidOperation) {
-            return res.status(400).send({ error: "Invalid updates!" });
-        }
-
-        const user = await User.findByIdAndUpdate(id, updates, {new: true,runValidators: true});
-        
-        res.send("user updated successfully",user);
-    }catch(err){
-        res.send("Error updating user", err);
-    }
-});
-
-//delete user by id
-app.delete("/user/:id", async(req, res) =>{
-    const id = req.params.id;
-    try{
-        const user = await User.findByIdAndDelete(id);
-        res.send("user deleted successfully");
-    }catch(err){
-        res.send("Error deleting user", err);
-    }
+app.get("/profile", authLogin, (req, res) => {
+    res.send(req.user);
 });
